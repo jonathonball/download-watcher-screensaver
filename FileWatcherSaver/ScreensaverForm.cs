@@ -77,10 +77,10 @@ namespace FileWatcherSaver
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.LimeGreen;
             
             grid.AutoGenerateColumns = false;
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Time", HeaderText = "Time" });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File" });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size" });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Status", HeaderText = "Status" });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Time", HeaderText = "Time", FillWeight = 10f, MinimumWidth = 80 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File", FillWeight = 60f, MinimumWidth = 220 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size", FillWeight = 15f, MinimumWidth = 70 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Status", HeaderText = "Status", FillWeight = 15f, MinimumWidth = 80 });
 
             fileData = new BindingList<FileRecord>();
             grid.DataSource = fileData;

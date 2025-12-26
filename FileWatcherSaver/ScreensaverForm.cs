@@ -47,7 +47,7 @@ namespace FileWatcherSaver
 
             // 2. The Title
             titleLabel = new Label();
-            titleLabel.Text = "ACTIVE FILE TRANSFERS";
+            titleLabel.Text = "MONITORING: ";
             titleLabel.ForeColor = Color.LimeGreen;
             titleLabel.Font = new Font("Consolas", 12, FontStyle.Bold);
             titleLabel.Dock = DockStyle.Top;
@@ -126,7 +126,7 @@ namespace FileWatcherSaver
                     fileData.Add(new FileRecord {
                         Time = f.LastWriteTime.ToString("HH:mm:ss"),
                         File = f.Name,
-                        Size = (f.Length / 1024) + " KB",
+                        Size = FormatBytes(f.Length),
                         Status = "EXISTING"
                     });
                 }
@@ -163,7 +163,7 @@ namespace FileWatcherSaver
             string size = "UNK";
             try { 
                 var info = new FileInfo(Path.Combine(watcher?.Path ?? "", name));
-                size = (info.Length / 1024) + " KB";
+                size = FormatBytes(info.Length);
             } catch {}
 
             fileData.Insert(0, new FileRecord { 
@@ -174,6 +174,20 @@ namespace FileWatcherSaver
             });
             
             if (fileData.Count > 25) fileData.RemoveAt(25);
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes < 0) return "0 B";
+            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+            double len = bytes;
+            int order = 0;
+            while (len >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                len /= 1024;
+            }
+            return string.Format("{0:0.##} {1}", len, sizes[order]);
         }
 
         private void OnTick(object? sender, EventArgs e)

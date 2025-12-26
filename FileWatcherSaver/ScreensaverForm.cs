@@ -23,7 +23,6 @@ namespace FileWatcherSaver
             public string? Time { get; set; }
             public string? File { get; set; }
             public string? Size { get; set; }
-            public string? Status { get; set; }
         }
 
         public ScreensaverForm(Rectangle bounds)
@@ -78,9 +77,8 @@ namespace FileWatcherSaver
             
             grid.AutoGenerateColumns = false;
             grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Time", HeaderText = "Time", FillWeight = 10f, MinimumWidth = 80 });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File", FillWeight = 60f, MinimumWidth = 220 });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size", FillWeight = 15f, MinimumWidth = 70 });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Status", HeaderText = "Status", FillWeight = 15f, MinimumWidth = 80 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File", FillWeight = 70f, MinimumWidth = 220 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size", FillWeight = 20f, MinimumWidth = 70 });
 
             fileData = new BindingList<FileRecord>();
             grid.DataSource = fileData;
@@ -126,8 +124,7 @@ namespace FileWatcherSaver
                     fileData.Add(new FileRecord {
                         Time = f.LastWriteTime.ToString("HH:mm:ss"),
                         File = f.Name,
-                        Size = FormatBytes(f.Length),
-                        Status = "EXISTING"
+                        Size = FormatBytes(f.Length)
                     });
                 }
             }
@@ -136,8 +133,7 @@ namespace FileWatcherSaver
                 fileData.Add(new FileRecord { 
                     Time = DateTime.Now.ToString("HH:mm:ss"), 
                     File = "ERROR: Check Permissions", 
-                    Size = "0 KB", 
-                    Status = "ERROR" 
+                    Size = "0 KB" 
                 });
             }
 
@@ -169,8 +165,7 @@ namespace FileWatcherSaver
             fileData.Insert(0, new FileRecord { 
                 Time = DateTime.Now.ToString("HH:mm:ss"), 
                 File = name, 
-                Size = size, 
-                Status = status 
+                Size = size
             });
             
             if (fileData.Count > 25) fileData.RemoveAt(25);

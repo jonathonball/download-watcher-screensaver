@@ -106,20 +106,9 @@ namespace FileWatcherSaver
 
         private void SetupWatcher()
         {
-            // Simple persistent storage without using Project Properties (which are harder in VS Code)
-            string path = "C:\\"; 
-            int speed = 4;
-
-            if (File.Exists("config.txt"))
-            {
-                try
-                {
-                    string[] lines = File.ReadAllLines("config.txt");
-                    if (lines.Length > 0) path = lines[0];
-                    if (lines.Length > 1 && int.TryParse(lines[1], out int s)) speed = s;
-                }
-                catch { }
-            }
+            var settings = AppSettings.Load();
+            string path = settings.DirectoryPath;
+            int speed = settings.Speed;
 
             if (!Directory.Exists(path)) path = "C:\\";
             

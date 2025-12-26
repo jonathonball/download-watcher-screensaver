@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace FileWatcherSaver
@@ -11,18 +12,18 @@ namespace FileWatcherSaver
         private Panel boxPanel;
         private DataGridView grid;
         private Label titleLabel;
-        private Timer animTimer;
+        private System.Windows.Forms.Timer animTimer;
         private Point mouseLocation;
         private int speedX = 4, speedY = 4;
-        private FileSystemWatcher watcher;
+        private FileSystemWatcher? watcher;
         private BindingList<FileRecord> fileData;
 
         // Data model
         public class FileRecord {
-            public string Time { get; set; }
-            public string File { get; set; }
-            public string Size { get; set; }
-            public string Status { get; set; }
+            public string? Time { get; set; }
+            public string? File { get; set; }
+            public string? Size { get; set; }
+            public string? Status { get; set; }
         }
 
         public ScreensaverForm(Rectangle bounds)
@@ -32,6 +33,7 @@ namespace FileWatcherSaver
             this.BackColor = Color.Black;
             this.TopMost = true;
             this.StartPosition = FormStartPosition.Manual;
+            this.DoubleBuffered = true;
 
             // --- UI CONSTRUCTION ---
             
@@ -66,9 +68,20 @@ namespace FileWatcherSaver
             grid.Font = new Font("Consolas", 9);
             grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             grid.DefaultCellStyle.BackColor = Color.Black;
+            grid.DefaultCellStyle.ForeColor = Color.LimeGreen;
             grid.DefaultCellStyle.SelectionBackColor = Color.Black; // No highlight
             grid.DefaultCellStyle.SelectionForeColor = Color.LimeGreen;
+
+            grid.EnableHeadersVisualStyles = false;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.Black;
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.LimeGreen;
             
+            grid.AutoGenerateColumns = false;
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Time", HeaderText = "Time" });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File" });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size" });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Status", HeaderText = "Status" });
+
             fileData = new BindingList<FileRecord>();
             grid.DataSource = fileData;
             boxPanel.Controls.Add(grid);
@@ -79,12 +92,12 @@ namespace FileWatcherSaver
             this.MouseDown += (s, e) => Application.Exit();
             this.MouseMove += OnMouseMove;
             
-            animTimer = new Timer();
+            animTimer = new System.Windows.Forms.Timer();
             animTimer.Interval = 16; // ~60fps
             animTimer.Tick += OnTick;
         }
 
-        private void OnLoad(object sender, EventArgs e)
+        private void OnLoad(object? sender, EventArgs e)
         {
             Cursor.Hide();
             SetupWatcher();
@@ -95,19 +108,59 @@ namespace FileWatcherSaver
         {
             // Simple persistent storage without using Project Properties (which are harder in VS Code)
             string path = "C:\\"; 
-            if(File.Exists("config.txt")) path = File.ReadAllText("config.txt");
+            int speed = 4;
+
+            if (File.Exists("config.txt"))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines("config.txt");
+                    if (lines.Length > 0) path = lines[0];
+                    if (lines.Length > 1 && int.TryParse(lines[1], out int s)) speed = s;
+                }
+                catch { }
+            }
+
+            if (!Directory.Exists(path)) path = "C:\\";
+            
+            speedX = speed;
+            speedY = speed;
 
             titleLabel.Text = $"MONITORING: {path.ToUpper()}";
 
+            try
+            {
+                var dirInfo = new DirectoryInfo(path);
+                var files = dirInfo.GetFiles().OrderByDescending(f => f.LastWriteTime).Take(25);
+                foreach (var f in files)
+                {
+                    fileData.Add(new FileRecord {
+                        Time = f.LastWriteTime.ToString("HH:mm:ss"),
+                        File = f.Name,
+                        Size = (f.Length / 1024) + " KB",
+                        Status = "EXISTING"
+                    });
+                }
+            }
+            catch 
+            {
+                fileData.Add(new FileRecord { 
+                    Time = DateTime.Now.ToString("HH:mm:ss"), 
+                    File = "ERROR: Check Permissions", 
+                    Size = "0 KB", 
+                    Status = "ERROR" 
+                });
+            }
+
             watcher = new FileSystemWatcher
             {
-                Path = Directory.Exists(path) ? path : "C:\\",
+                Path = path,
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.LastWrite,
                 EnableRaisingEvents = true
             };
 
-            watcher.Changed += (s, e) => AddRecord(e.Name, "MODIFIED");
-            watcher.Created += (s, e) => AddRecord(e.Name, "CREATED");
+            watcher.Changed += (s, e) => AddRecord(e.Name ?? "Unknown", "MODIFIED");
+            watcher.Created += (s, e) => AddRecord(e.Name ?? "Unknown", "CREATED");
         }
 
         private void AddRecord(string name, string status)
@@ -120,7 +173,7 @@ namespace FileWatcherSaver
 
             string size = "UNK";
             try { 
-                var info = new FileInfo(Path.Combine(watcher.Path, name));
+                var info = new FileInfo(Path.Combine(watcher?.Path ?? "", name));
                 size = (info.Length / 1024) + " KB";
             } catch {}
 
@@ -134,24 +187,26 @@ namespace FileWatcherSaver
             if (fileData.Count > 25) fileData.RemoveAt(25);
         }
 
-        private void OnTick(object sender, EventArgs e)
+        private void OnTick(object? sender, EventArgs e)
         {
-            boxPanel.Left += speedX;
-            boxPanel.Top += speedY;
+            int newX = boxPanel.Left + speedX;
+            int newY = boxPanel.Top + speedY;
 
             // Bounce X
-            if (boxPanel.Left <= 0 || boxPanel.Right >= this.Width) {
+            if (newX <= 0 || newX + boxPanel.Width >= this.Width) {
                 speedX = -speedX;
-                boxPanel.Left = Math.Clamp(boxPanel.Left, 0, this.Width - boxPanel.Width);
+                newX = Math.Clamp(newX, 0, this.Width - boxPanel.Width);
             }
             // Bounce Y
-            if (boxPanel.Top <= 0 || boxPanel.Bottom >= this.Height) {
+            if (newY <= 0 || newY + boxPanel.Height >= this.Height) {
                 speedY = -speedY;
-                boxPanel.Top = Math.Clamp(boxPanel.Top, 0, this.Height - boxPanel.Height);
+                newY = Math.Clamp(newY, 0, this.Height - boxPanel.Height);
             }
+
+            boxPanel.Location = new Point(newX, newY);
         }
 
-        private void OnMouseMove(object sender, MouseEventArgs e)
+        private void OnMouseMove(object? sender, MouseEventArgs e)
         {
             if (!mouseLocation.IsEmpty)
             {

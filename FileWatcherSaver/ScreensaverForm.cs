@@ -15,7 +15,6 @@ namespace FileWatcherSaver
         private System.Windows.Forms.Timer animTimer;
         private Point mouseLocation;
         private int speedX = 4, speedY = 4;
-        private BindingList<FileRecord> fileData;
 
         // Data model
         public class FileRecord {
@@ -79,8 +78,6 @@ namespace FileWatcherSaver
             grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File", FillWeight = 70f, MinimumWidth = 220 });
             grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size", FillWeight = 20f, MinimumWidth = 70 });
 
-            fileData = new BindingList<FileRecord>();
-            grid.DataSource = fileData;
             boxPanel.Controls.Add(grid);
 
             // --- EVENTS ---
@@ -114,27 +111,6 @@ namespace FileWatcherSaver
 
             titleLabel.Text = $"MONITORING: {path.ToUpper()}";
 
-            try
-            {
-                var dirInfo = new DirectoryInfo(path);
-                var files = dirInfo.GetFiles().OrderByDescending(f => f.LastWriteTime).Take(25);
-                foreach (var f in files)
-                {
-                    fileData.Add(new FileRecord {
-                        Time = f.LastWriteTime.ToString("HH:mm:ss"),
-                        File = f.Name
-                        // <==size goes here
-                    });
-                }
-            }
-            catch 
-            {
-                fileData.Add(new FileRecord { 
-                    Time = DateTime.Now.ToString("HH:mm:ss"), 
-                    File = "ERROR: Check Permissions", 
-                    Size = "0 KB" 
-                });
-            }
         }
 
         private void OnTick(object? sender, EventArgs e)

@@ -1,6 +1,3 @@
-using System.IO;
-using System;
-
 namespace FileMonitoring
 {
     /// <summary>

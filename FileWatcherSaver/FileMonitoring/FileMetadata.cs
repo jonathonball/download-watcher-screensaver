@@ -9,7 +9,7 @@ namespace FileMonitoring
     {
         public string Name { get; set; } = "";
         public string FullPath { get; set; } = "";
-        public long SizeInBytes { get; set; }
-        public DateTime LastModifiedUtc { get; set; }
+        public string? SizeInBytes { get; set; }
+        public string? LastModifiedUtc { get; set; }
     }
 }

@@ -37,13 +37,14 @@ namespace FileMonitoring
                 {
                     long size = FileDetailsRetriever.GetActualFileSize(file);
                     DateTime lastModified = FileDetailsRetriever.GetLastWriteTimeUtc(file);
+                    string lastModifiedStrFormatted = lastModified == DateTime.MinValue ? "??" : lastModified.ToString("HH:mm:ss");
 
                     fileMetadataList.Add(new FileMetadata
                     {
                         Name = Path.GetFileName(file),
                         FullPath = file,
-                        SizeInBytes = size,
-                        LastModifiedUtc = lastModified
+                        SizeInBytes = size == -1 ? "INACCESSIBLE" : size.ToString(),
+                        LastModifiedUtc = lastModifiedStrFormatted
                     });
 
                     if (size == -1 && debugMode)

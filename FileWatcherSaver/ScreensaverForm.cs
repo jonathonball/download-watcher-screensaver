@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using FileMonitoring;
 
 namespace FileWatcherSaver
 {
@@ -15,13 +17,10 @@ namespace FileWatcherSaver
         private System.Windows.Forms.Timer animTimer;
         private Point mouseLocation;
         private int speedX = 4, speedY = 4;
-
-        // Data model
-        public class FileRecord {
-            public string? Time { get; set; }
-            public string? File { get; set; }
-            public string? Size { get; set; }
-        }
+        private string path = "C:\\";
+        private int refreshIntervalTicks = 120; // Refresh every 60 ticks (~1 second)
+        private int tickCounter = 0;
+        private int maxFilesToShow = 100;
 
         public ScreensaverForm(Rectangle bounds)
         {
@@ -74,9 +73,9 @@ namespace FileWatcherSaver
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.LimeGreen;
             
             grid.AutoGenerateColumns = false;
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Time", HeaderText = "Time", FillWeight = 10f, MinimumWidth = 80 });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "File", HeaderText = "File", FillWeight = 70f, MinimumWidth = 220 });
-            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Size", HeaderText = "Size", FillWeight = 20f, MinimumWidth = 70 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "LastModifiedUtc", HeaderText = "Modified", FillWeight = 10f, MinimumWidth = 80 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "File", FillWeight = 70f, MinimumWidth = 220 });
+            grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SizeInBytes", HeaderText = "Size (b)", FillWeight = 20f, MinimumWidth = 70 });
 
             boxPanel.Controls.Add(grid);
 
@@ -94,15 +93,10 @@ namespace FileWatcherSaver
         private void OnLoad(object? sender, EventArgs e)
         {
             Cursor.Hide();
-            SetupWatcher();
-            animTimer.Start();
-        }
-
-        private void SetupWatcher()
-        {
             var settings = AppSettings.Load();
-            string path = settings.DirectoryPath;
+            if (settings.DirectoryPath != null) path = settings.DirectoryPath;
             int speed = settings.Speed;
+            refreshIntervalTicks = settings.RefreshIntervalTicks;
 
             if (!Directory.Exists(path)) path = "C:\\";
             
@@ -110,7 +104,18 @@ namespace FileWatcherSaver
             speedY = speed;
 
             titleLabel.Text = $"MONITORING: {path.ToUpper()}";
+            RefreshFileList();
+            animTimer.Start();
+        }
 
+        private void RefreshFileList()
+        {
+            var monitor = new DirectoryMonitor();
+            var files = monitor.GetDirectoryListing(path, debugMode: false)
+                               .Take(maxFilesToShow)
+                               .ToList();
+
+            grid.DataSource = files;
         }
 
         private void OnTick(object? sender, EventArgs e)
@@ -118,6 +123,11 @@ namespace FileWatcherSaver
             int newX = boxPanel.Left + speedX;
             int newY = boxPanel.Top + speedY;
 
+            if (tickCounter >= refreshIntervalTicks)
+            {
+                RefreshFileList();
+                tickCounter = 0;
+            }
             // Bounce X
             if (newX <= 0 || newX + boxPanel.Width >= this.Width) {
                 speedX = -speedX;
@@ -130,6 +140,7 @@ namespace FileWatcherSaver
             }
 
             boxPanel.Location = new Point(newX, newY);
+            tickCounter++;
         }
 
         private void OnMouseMove(object? sender, MouseEventArgs e)

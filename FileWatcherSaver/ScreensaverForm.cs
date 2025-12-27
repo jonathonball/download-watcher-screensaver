@@ -15,7 +15,6 @@ namespace FileWatcherSaver
         private System.Windows.Forms.Timer animTimer;
         private Point mouseLocation;
         private int speedX = 4, speedY = 4;
-        private FileSystemWatcher? watcher;
         private BindingList<FileRecord> fileData;
 
         // Data model
@@ -123,8 +122,8 @@ namespace FileWatcherSaver
                 {
                     fileData.Add(new FileRecord {
                         Time = f.LastWriteTime.ToString("HH:mm:ss"),
-                        File = f.Name,
-                        Size = FormatBytes(f.Length)
+                        File = f.Name
+                        // <==size goes here
                     });
                 }
             }
@@ -136,53 +135,6 @@ namespace FileWatcherSaver
                     Size = "0 KB" 
                 });
             }
-
-            watcher = new FileSystemWatcher
-            {
-                Path = path,
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.LastWrite,
-                EnableRaisingEvents = true
-            };
-
-            watcher.Changed += (s, e) => AddRecord(e.Name ?? "Unknown", "MODIFIED");
-            watcher.Created += (s, e) => AddRecord(e.Name ?? "Unknown", "CREATED");
-        }
-
-        private void AddRecord(string name, string status)
-        {
-             // Marshaling back to UI thread
-            if (this.InvokeRequired) {
-                this.Invoke(new Action(() => AddRecord(name, status)));
-                return;
-            }
-
-            string size = "UNK";
-            try { 
-                var info = new FileInfo(Path.Combine(watcher?.Path ?? "", name));
-                size = FormatBytes(info.Length);
-            } catch {}
-
-            fileData.Insert(0, new FileRecord { 
-                Time = DateTime.Now.ToString("HH:mm:ss"), 
-                File = name, 
-                Size = size
-            });
-            
-            if (fileData.Count > 25) fileData.RemoveAt(25);
-        }
-
-        private static string FormatBytes(long bytes)
-        {
-            if (bytes < 0) return "0 B";
-            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-            double len = bytes;
-            int order = 0;
-            while (len >= 1024 && order < sizes.Length - 1)
-            {
-                order++;
-                len /= 1024;
-            }
-            return string.Format("{0:0.##} {1}", len, sizes[order]);
         }
 
         private void OnTick(object? sender, EventArgs e)

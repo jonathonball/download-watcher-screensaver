@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -15,9 +15,9 @@ jobs:
       with:
         dotnet-version: '8.x'
     - name: Get tag from release
-      run: echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+      run: echo "TAG_NAME=${{ github.ref_name }}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
     - name: Publish
-      run: dotnet publish --runtime win-x64 --self-contained true -p:PublishSingleFile=true --configuration Release -p:Version=${{ env.TAG_NAME }} --output ./release
+      run: dotnet publish FileWatcherSaver\FileWatcherSaver.csproj --runtime win-x64 --self-contained true -p:PublishSingleFile=true --configuration Release /p:Version=${{ env.TAG_NAME }} --output ./release
     - name: Rename executable
       run: ren ./release/FileWatcherSaver.exe download-watcher-screensaver-${{ env.TAG_NAME }}.exe
     - name: Upload Release Asset

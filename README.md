@@ -1,10 +1,16 @@
 # download-watcher-screensaver
-A Windows screensaver that monitors a specific directory (e.g., Downloads) and visualizes file activity in a retro "DVD bounce" style interface.
+This is an OLED burn-in prevention tool. This is a Windows screensaver that watches a folder. It is designed for keeping an eye on long running file transfers on OLED. The information panel will move around the screen in a path similar to an old school DVD screensaver. Should run on anything that supports DotNet SDK 8.
 
 ## Features
-- Real-time monitoring of file creation and modification.
-- Configurable directory path and movement speed.
-- Settings stored in User AppData.
+- Shows up to 15 of the newest files in a directory with the newest timestamps at the top
+- Displays file timestamp, filename, and size
+- Moves the data around the screen to prevent burn-in
+- Configurable directory path to monitor
+- Configurable refresh interval for file metadata refresh
+  - Default is 120 ticks or once every 2 seconds
+  - Adjustable between 30 ticks (twice per second) and 3600 ticks (once every 60 seconds)
+- Configurable refresh interval for window movement on screen
+- Settings stored as json text in `%AppData%\Local\FileWatcherSaver`
 
 ## Prerequisites
 To build this project, you need the .NET 8 SDK.
@@ -19,7 +25,8 @@ winget install Microsoft.DotNet.SDK.8
 2. Run the publish command to create a single-file executable:
 
 ```powershell
-dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o ./publish
+cd FileWatcherSaver
+dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o ../publish
 ```
 *Note: Change `--self-contained false` to `true` if you want to bundle the .NET runtime inside the screensaver (larger file size, but no separate .NET installation required on the target machine).*
 
@@ -34,3 +41,6 @@ dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile
 
 ## Example
 ![Example](example.png)
+
+## Note
+Read the LICENSE file for more information.

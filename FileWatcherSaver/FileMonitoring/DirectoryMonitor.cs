@@ -14,7 +14,7 @@ namespace FileMonitoring
         /// <returns>A sorted list of FileMetadata objects.</returns>
         public List<FileMetadata> GetDirectoryListing(string path, bool debugMode = false)
         {
-            var fileMetadataList = new List<FileMetadata>();
+            var fileDetails = new List<(FileMetadata metadata, DateTime lastModified, long size)>();
 
             if (!Directory.Exists(path))
             {
@@ -22,7 +22,7 @@ namespace FileMonitoring
                 {
                     Console.WriteLine($"Error: Directory not found - {path}");
                 }
-                return fileMetadataList;
+                return new List<FileMetadata>();
             }
 
             try
@@ -34,13 +34,17 @@ namespace FileMonitoring
                     DateTime lastModified = FileDetailsRetriever.GetLastWriteTimeUtc(file);
                     string lastModifiedStrFormatted = lastModified == DateTime.MinValue ? "??" : lastModified.ToString("HH:mm:ss");
 
-                    fileMetadataList.Add(new FileMetadata
-                    {
-                        Name = Path.GetFileName(file),
-                        FullPath = file,
-                        SizeInBytes = size == -1 ? "INACCESSIBLE" : size.ToString(),
-                        LastModifiedUtc = lastModifiedStrFormatted
-                    });
+                    fileDetails.Add((
+                        new FileMetadata
+                        {
+                            Name = Path.GetFileName(file),
+                            FullPath = file,
+                            SizeInBytes = size == -1 ? "INACCESSIBLE" : size.ToString(),
+                            LastModifiedUtc = lastModifiedStrFormatted
+                        },
+                        lastModified,
+                        size
+                    ));
 
                     if (size == -1 && debugMode)
                     {
@@ -54,12 +58,20 @@ namespace FileMonitoring
                 {
                     Console.WriteLine($"An error occurred while accessing directory '{path}': {ex.Message}");
                 }
-                // Return an empty list or whatever has been collected so far
-                return fileMetadataList;
+                // Return whatever has been collected so far.
+                return fileDetails
+                    .OrderBy(f => f.size == -1 ? 0 : 1)
+                    .ThenByDescending(f => f.lastModified)
+                    .Select(f => f.metadata)
+                    .ToList();
             }
 
-            // Sort the list by newest file first
-            return fileMetadataList.OrderByDescending(f => f.LastModifiedUtc).ToList();
+            // Sort by accessibility (inaccessible first), then by newest file first.
+            return fileDetails
+                .OrderBy(f => f.size == -1 ? 0 : 1)
+                .ThenByDescending(f => f.lastModified)
+                .Select(f => f.metadata)
+                .ToList();
         }
     }
 }

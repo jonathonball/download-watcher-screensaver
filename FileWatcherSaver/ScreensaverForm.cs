@@ -7,6 +7,7 @@ namespace FileWatcherSaver
         private Panel boxPanel;
         private DataGridView grid;
         private Label titleLabel;
+        private Label infoLabel;
         private System.Windows.Forms.Timer animTimer;
         private Point mouseLocation;
         private int speedX = 4, speedY = 4;
@@ -28,7 +29,7 @@ namespace FileWatcherSaver
             
             // 1. The Moving Panel
             boxPanel = new Panel();
-            boxPanel.Size = new Size(600, 400);
+            boxPanel.Size = new Size(600, 420);
             boxPanel.BackColor = Color.FromArgb(20, 20, 20); // Dark Grey
             boxPanel.BorderStyle = BorderStyle.FixedSingle;
             boxPanel.Location = new Point(100, 100); // Start pos
@@ -71,6 +72,15 @@ namespace FileWatcherSaver
             grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SizeInBytes", HeaderText = "Size (b)", FillWeight = 20f, MinimumWidth = 70 });
 
             boxPanel.Controls.Add(grid);
+
+            infoLabel = new Label();
+            infoLabel.Height = 20;
+            infoLabel.Dock = DockStyle.Bottom;
+            infoLabel.TextAlign = ContentAlignment.MiddleCenter;
+            infoLabel.ForeColor = Color.Gray;
+            infoLabel.Font = new Font("Consolas", 8);
+            infoLabel.Text = "Move mouse or press any key to exit";
+            boxPanel.Controls.Add(infoLabel);
 
             // --- EVENTS ---
             this.Load += OnLoad;
@@ -130,6 +140,13 @@ namespace FileWatcherSaver
             if (newY <= 0 || newY + boxPanel.Height >= this.Height) {
                 speedY = -speedY;
                 newY = Math.Clamp(newY, 0, this.Height - boxPanel.Height);
+            }
+
+            if (refreshIntervalTicks > 120)
+            {
+                // update info label to show time until next refresh
+                int secondsLeft = ((refreshIntervalTicks - tickCounter) / 60) + 1;
+                infoLabel.Text = $"Refreshing in {secondsLeft} seconds";
             }
 
             boxPanel.Location = new Point(newX, newY);

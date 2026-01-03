@@ -35,7 +35,7 @@ namespace FileWatcherSaver
                 Location = new Point(leftOffset, 100),
                 Width = 280,
                 Minimum = 1,
-                Maximum = 20,
+                Maximum = 6,
                 TickFrequency = 1
             };
             this.Controls.Add(trackSpeed);
@@ -91,7 +91,7 @@ namespace FileWatcherSaver
             this.Controls.Add(txtConfigPath);
 
             var settings = AppSettings.Load();
-            txtPath.Text = settings.DirectoryPath;
+            txtPath.Text = settings.getDirectoryPathOrDefault();
             trackSpeed.Value = settings.Speed;
             lblSpeedVal.Text = trackSpeed.Value.ToString();
             textRefresh.Text = (settings.RefreshIntervalTicks / 60).ToString();
@@ -102,8 +102,9 @@ namespace FileWatcherSaver
                 Height = 30
             };
             btnSave.Click += (s, e) => {
+                if (!Directory.Exists(txtPath.Text)) txtPath.Text = "%USERPROFILE%\\Downloads";
                 var newSettings = new AppSettings { 
-                    DirectoryPath = txtPath.Text, 
+                    DirectoryPath = txtPath.Text,
                     Speed = trackSpeed.Value,
                     RefreshIntervalTicks = int.Parse(textRefresh.Text) * 60
                 };

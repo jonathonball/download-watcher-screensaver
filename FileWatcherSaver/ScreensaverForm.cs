@@ -10,7 +10,7 @@ namespace FileWatcherSaver
         private Label infoLabel;
         private System.Windows.Forms.Timer animTimer;
         private Point mouseLocation;
-        private int speedX = 4, speedY = 4;
+        private int speedX = 1, speedY = 1;
         private string path = "C:\\";
         private int refreshIntervalTicks = 120; // Refresh every 60 ticks (~1 second)
         private int tickCounter = 0;
@@ -97,11 +97,11 @@ namespace FileWatcherSaver
         {
             Cursor.Hide();
             var settings = AppSettings.Load();
-            if (settings.DirectoryPath != null) path = settings.DirectoryPath;
+
+            string path = settings.getDirectoryPathOrDefault();
+
             int speed = settings.Speed;
             refreshIntervalTicks = settings.RefreshIntervalTicks;
-
-            if (!Directory.Exists(path)) path = "C:\\";
             
             speedX = speed;
             speedY = speed;

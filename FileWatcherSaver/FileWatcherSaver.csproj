@@ -8,4 +8,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <AssemblyTitle>File Watcher</AssemblyTitle>
+    <AssemblyProduct>File Watcher</AssemblyProduct>
+    <Description>File Watcher — monitors downloads and displays a screensaver</Description>
+  </PropertyGroup>
+
 </Project>

@@ -98,7 +98,7 @@ namespace FileWatcherSaver
             Cursor.Hide();
             var settings = AppSettings.Load();
 
-            string path = settings.getDirectoryPathOrDefault();
+            path = settings.getDirectoryPathOrDefault();
 
             int speed = settings.Speed;
             refreshIntervalTicks = settings.RefreshIntervalTicks;
